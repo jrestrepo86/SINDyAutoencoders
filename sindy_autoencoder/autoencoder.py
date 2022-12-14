@@ -46,11 +46,11 @@ def get_activation_fn(afn):
 
 # ------------------------------------------------------------------------
 # Funciones de costo
-def get_loss_fn(lfn, loss_param=None):
+def get_loss_fn(lfn, **kwargs):
     loss_functions = {
-        "mse": nn.MSELoss,
-        "l1": nn.L1Loss,
-        'l1-mse': L1MSE(*loss_param),
+        "mse": nn.MSELoss(),
+        "l1": nn.L1Loss(),
+        'l1-mse': L1MSE(kwargs.get('a', None)),
     }
 
     if lfn not in loss_functions:
@@ -70,7 +70,7 @@ class L1MSE(nn.Module):
         else:
             self.a = a
 
-    def forward(self, input, output):
+    def forward(self, output, input):
         x = output - input
         loss = self.a * nn.MSELoss(x) + (1 - self.a) * nn.L1Loss(x)
         return loss.mean()
@@ -109,7 +109,7 @@ class AutoEncoder(nn.Module):
         self.decoder = decoder.to(device)
 
     def forward(self, input):
-        return self.encoder.forward(self.encoder.forward(input))
+        return self.decoder.forward(self.encoder.forward(input))
 
 
 # ------------------------------------------------------------------------
@@ -124,7 +124,7 @@ class simpleLayers(nn.Module):
             layers.append(nn.Linear(in_features=m, out_features=n, bias=True))
             layers.append(activation_fn())
         layers.pop(-1)
-        self.layers = nn.Secuential(*layers)
+        self.layers = nn.Sequential(*layers)
 
     def _init_weights(self, layer):
         if isinstance(layer, nn.Linear):
@@ -145,7 +145,7 @@ class PReLU_Layers(nn.Module):
             layers.append(nn.Linear(in_features=m, out_features=n, bias=True))
             layers.append(activation_fn(num_parameters=n))
         layers.pop(-1)
-        self.layers = nn.Secuential(*layers)
+        self.layers = nn.Sequential(*layers)
 
     def _init_weights(self, layer):
         if isinstance(layer, nn.Linear):
@@ -158,7 +158,7 @@ class PReLU_Layers(nn.Module):
 
 # ------------------------------------------------------------------------
 # Entrenamiento
-def train(loader, model, optimizer, loss, n_epoch, device=None):
+def train(loader, model, optimizer, loss_fn, n_epoch, device=None):
 
     if device is None:
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -174,7 +174,7 @@ def train(loader, model, optimizer, loss, n_epoch, device=None):
             batch = batch.to(device)
             optimizer.zero_grad()
             output = model(batch)
-            train_loss = loss(batch, output)
+            train_loss = loss_fn(output, batch)
             train_loss.backward()
             optimizer.step()
             loss += train_loss.item()

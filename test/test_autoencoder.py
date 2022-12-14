@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
@@ -9,11 +11,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader
 
-import sindy_autoencoder.autoencoder as au
+sys.path.append('../sindy_autoencoder/')
+import autoencoder as au
 
 # cargar datos
 DATA_PATH = '../data'
-data = sp.io.loadmat(f'{DATA_PATH}/AB30_sindy.mat')['angleData']
+data = sp.io.loadmat(f'{DATA_PATH}/AB06_sindy.mat')['angleData']
 data = data.astype(np.float32)
 
 scaler = StandardScaler()
@@ -31,7 +34,7 @@ model_param = {
 trainig_params = {
     'lr': 0.025,
     'n_epoch': 300,
-    'batch_size': '250',
+    'batch_size': 250,
 }
 
 model = au.AutoEncoder(
@@ -58,3 +61,6 @@ Losses = au.train(train_loader,
                   optimizer,
                   loss_fn,
                   n_epoch=trainig_params['n_epoch'])
+
+plt.plot(Losses)
+plt.show()
