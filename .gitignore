@@ -28,7 +28,7 @@ codegen/
 octave-workspace
 
 # Data
-*.mat
+# *.mat
 
 # simulations temp files
 log*.txt
